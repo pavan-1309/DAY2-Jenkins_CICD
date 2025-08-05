@@ -9,6 +9,7 @@ pipeline {
     environment {
         SONARQUBE_SERVER = 'sonar' 
         SCANNER_HOME = tool 'sonar' 
+    }
 
     stages {
 
@@ -82,6 +83,7 @@ pipeline {
                 sh 'trivy image --exit-code 0 --severity HIGH,CRITICAL $DOCKER_USER/petclinic:latest || true'
             }
         }
+
         stage('Deploy the Application') {
             steps {
                 sh '''
