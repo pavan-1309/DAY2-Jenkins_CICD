@@ -15,7 +15,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git 'https://github.com/spring-petclinic/spring-framework-petclinic.git'
+                git 'https://github.com/pavan-1309/DAY2-Jenkins_CICD.git'
             }
         }
 
