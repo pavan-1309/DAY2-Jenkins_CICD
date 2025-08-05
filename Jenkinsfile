@@ -4,6 +4,9 @@ pipeline {
         jdk 'java'
         maven 'maven'
     }
+    environment {
+        SCANNER_HOME = tool 'sonar'
+    }
 
     stages {
         stage('Clean workspace') {
@@ -24,8 +27,16 @@ pipeline {
                 sh 'mvn clean compile'
             }
         }
-
-        stage('Test Cases') {
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    withSonarQubeEnv('sonarqube') {
+                        sh 'mvn sonar:sonar'
+                    }
+                }
+            }
+        }
+        stage('Unit Tests') {
             steps {
                 sh 'mvn test'
             }
