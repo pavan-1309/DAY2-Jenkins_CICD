@@ -41,7 +41,17 @@ pipeline {
             steps {
                 sh 'mvn package'
             }
-        }   
+        }
+        stage('docker build') {
+            steps {
+                script {
+                    withDockerRegistry([credentialsId: 'docker']) {
+                        sh 'docker build -t petclinic:latest .'
+                        sh 'docker tag petclinic:latest pavan1309/petclinic:latest'
+                        sh 'docker push pavan1309/petclinic:latest'
+                    }
+            }
+        }
     }
 
 }
