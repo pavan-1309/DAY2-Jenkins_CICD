@@ -43,26 +43,26 @@ pipeline {
                 sh 'mvn package'
             }
         }
-
-        stage('Docker Build & Push') {
+        stage('Docker Build and Push') {
             steps {
                 script {
-                    withCredentials([
-                        usernamePassword(
-                            credentialsId: 'docker',
-                            usernameVariable: 'DOCKER_USER',
-                            passwordVariable: 'DOCKER_PASS'
-                        )
-                    ]) {
-                        sh '''
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                            docker build -t pavan1309/petclinic:latest .
-                            docker push pavan1309/petclinic:latest
-                            docker logout
-                        '''
+                    withDockerRegistry(credentialsId: 'docker'){
+                        sh 'docker build -t pavan1309/petclinic:latest .'
+                        sh 'docker push pavan1309/petclinic:latest'
+
+                    }  
+                }   
+            }
+        }
+        stage('Image Scan') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker') {
+                        sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL pavan1309/petclinic:latest'
                     }
                 }
             }
         }
+
     }
 }
