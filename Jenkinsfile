@@ -7,8 +7,8 @@ pipeline {
     }
 
     environment {
-        SONARQUBE_SERVER = 'sonar' 
-        SCANNER_HOME = tool 'sonar' 
+        SONARQUBE_SERVER = 'sonar'
+        SCANNER_HOME = tool 'sonar'
     }
 
     stages {
@@ -46,10 +46,18 @@ pipeline {
                             -Dsonar.projectKey=petclinic \
                             -Dsonar.projectName=Petclinic \
                             -Dsonar.sources=. \
-                            -Dsonar.java.binaries=. \
+                            -Dsonar.java.binaries=target/classes \
                             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                         '''
                     }
+                }
+            }
+        }
+
+        stage('SonarQube Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
@@ -80,21 +88,32 @@ pipeline {
 
         stage('Trivy Scan') {
             steps {
-                sh 'trivy image --exit-code 0 --severity HIGH,CRITICAL $DOCKER_USER/petclinic:latest || true'
+                sh '''
+                    trivy image --exit-code 0 --severity HIGH,CRITICAL --format table -o trivy-report.txt $DOCKER_USER/petclinic:latest || true
+                '''
             }
         }
 
         stage('Deploy the Application') {
             steps {
-                environment {
-                    DOCKER_USER = credentials('docker')
-                }
                 sh '''
                     docker rm -f petclinic || true
                     docker run -d --name petclinic -p 8082:8080 $DOCKER_USER/petclinic:latest
                 '''
             }
         }
+    }
 
+    post {
+        always {
+            archiveArtifacts artifacts: 'target/*.war', fingerprint: true
+            archiveArtifacts artifacts: 'trivy-report.txt', allowEmptyArchive: true
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
     }
 }
