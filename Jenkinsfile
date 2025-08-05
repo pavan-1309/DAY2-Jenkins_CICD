@@ -15,7 +15,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git 'https://github.com/pavan-1309/DAY2-Jenkins_CICD.git'
+                git branch: 'main', url: 'https://github.com/pavan-1309/DAY2-Jenkins_CICD.git'
             }
         }
 
