@@ -87,3 +87,9 @@ GitHub Webhook Integration
 Jenkinsfile
 -----------
 - The CI/CD workflow is implemented using a declarative Jenkinsfile stored in the root of the repository.
+
+Future improvements and extensions
+----------------------------------
+1) Arifact Managaement using Nexus Repositoy
+2) Automatic Deployment to Kubenetes cluster
+3) Monitering tool setup

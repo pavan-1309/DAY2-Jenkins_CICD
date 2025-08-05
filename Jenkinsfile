@@ -7,9 +7,8 @@ pipeline {
     }
 
     environment {
-        SONARQUBE_SERVER = 'sonar' // Jenkins SonarQube server name
-        SCANNER_HOME = tool 'sonar-scanner' // Must match Jenkins tool name
-    }
+        SONARQUBE_SERVER = 'sonar' 
+        SCANNER_HOME = tool 'sonar' 
 
     stages {
 
@@ -42,7 +41,7 @@ pipeline {
                 script {
                     withSonarQubeEnv("${SONARQUBE_SERVER}") {
                         sh '''
-                            ${SCANNER_HOME}/bin/sonar-scanner \
+                            ${SCANNER_HOME}/bin/sonar \
                             -Dsonar.projectKey=petclinic \
                             -Dsonar.projectName=Petclinic \
                             -Dsonar.sources=. \
