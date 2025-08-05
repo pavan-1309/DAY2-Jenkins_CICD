@@ -86,6 +86,9 @@ pipeline {
 
         stage('Deploy the Application') {
             steps {
+                environment {
+                    DOCKER_USER = credentials('docker')
+                }
                 sh '''
                     docker rm -f petclinic || true
                     docker run -d --name petclinic -p 8082:8080 $DOCKER_USER/petclinic:latest
