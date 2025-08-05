@@ -31,6 +31,12 @@ pipeline {
                 sh 'mvn test'
             }
         }
+        stage('Dependency Check') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --format HTML ', odcInstallation: 'owasp'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
         stage('build') {
             steps {
                 sh 'mvn package'
