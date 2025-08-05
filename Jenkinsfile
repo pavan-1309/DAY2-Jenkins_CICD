@@ -1,9 +1,11 @@
 pipeline {
     agent any
+
     tools {
         jdk 'java'
         maven 'maven'
     }
+
     environment {
         SCANNER_HOME = tool 'sonar'
     }
@@ -27,15 +29,34 @@ pipeline {
                 sh 'mvn clean compile'
             }
         }
+
         stage('SonarQube Analysis') {
             steps {
                 script {
                     withSonarQubeEnv('sonar') {
-                        sh 'mvn sonar:sonar'
+                        sh '''
+                            $SCANNER_HOME/bin/sonar-scanner \
+                            -Dsonar.projectName=Petclinic \
+                            -Dsonar.projectKey=petclinic \
+                            -Dsonar.sources=. \
+                            -Dsonar.java.binaries=.
+                        '''
                     }
                 }
             }
         }
+
+        stage('SonarQube Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'MINUTES') {
+                    script {
+                        waitForQualityGate abortPipeline: true
+                    }
+                }
+                echo 'SonarQube Quality Gate passed.'
+            }
+        }
+
         stage('Unit Tests') {
             steps {
                 sh 'mvn test'
@@ -54,33 +75,33 @@ pipeline {
                 sh 'mvn package'
             }
         }
+
         stage('Docker Build and Push') {
             steps {
                 script {
-                    withDockerRegistry(credentialsId: 'docker'){
+                    withDockerRegistry(credentialsId: 'docker') {
                         sh 'docker build -t pavan1309/petclinic:latest .'
                         sh 'docker push pavan1309/petclinic:latest'
-
-                    }  
-                }   
-            }
-        }
-        stage('Image Scan') {
-            steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker') {
-                        sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL pavan1309/petclinic:latest'
                     }
                 }
             }
         }
-        stage('Deploy the Application') {
+
+        stage('Image Scan') {
             steps {
                 script {
-                    sh 'docker run -d -p 8082:8080 pavan1309/petclinic:latest'
+                    sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --exit-code 1 --severity HIGH,CRITICAL pavan1309/petclinic:latest'
                 }
             }
         }
 
+        stage('Deploy the Application') {
+            steps {
+                script {
+                    sh 'docker rm -f petclinic || true'
+                    sh 'docker run -d --name petclinic -p 8082:8080 pavan1309/petclinic:latest'
+                }
+            }
+        }
     }
 }

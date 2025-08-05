@@ -1,67 +1,89 @@
-# DAY2-Jenkins_CICD
+Spring Petclinic – CI/CD Pipeline
+=================================
 
-Spring Framework Petclinic - CI/CD Pipeline
-===========================================
+This project sets up a complete CI/CD pipeline for the Spring Framework Petclinic application using Jenkins, SonarQube, Docker, Trivy, and OWASP Dependency Check.
 
-This project implements a complete CI/CD pipeline for the Spring Petclinic project using Jenkins, SonarQube, Docker, and Trivy.
-
-Source Code: https://github.com/spring-petclinic/spring-framework-petclinic.git
+Source Code
+-----------
+GitHub Repository:
+https://github.com/spring-petclinic/spring-framework-petclinic.git
 
 Pipeline Stages
 ---------------
 
 1. Checkout
-   - Pulls the latest source code from the GitHub repository.
+   - Pulls the latest source code from GitHub.
 
 2. Clean & Compile
-   - Executes Maven commands to clean old artifacts and compile the Java source:
+   - Cleans old build artifacts and compiles the source code:
      mvn clean compile
 
 3. SonarQube Analysis
-   - Runs static code analysis via SonarQube:
+   - Performs static code analysis using SonarQube:
      mvn sonar:sonar -DskipTests
 
-4. Unit Tests
-   - Executes all unit tests:
+4. SonarQube Quality Gate
+   - Waits for SonarQube quality gate result to determine code health.
+     Jenkins will abort if quality gate fails.
+
+5. Unit Tests
+   - Runs all unit tests:
      mvn test
 
-5. Dependency Check
-   - Scans for known vulnerabilities using OWASP Dependency Check:
+6. OWASP Dependency Check
+   - Scans dependencies for known vulnerabilities:
      mvn org.owasp:dependency-check-maven:check
 
-6. Build (WAR/JAR)
+7. Package Build (WAR/JAR)
    - Packages the application:
      mvn package
 
-7. Docker Build & Push
+8. Docker Build & Push
    - Builds a Docker image and pushes it to Docker Hub:
      docker build -t pavan1309/petclinic:latest .
      docker push pavan1309/petclinic:latest
 
-8. Trivy Scan
+9. Trivy Image Scan
    - Scans the Docker image for vulnerabilities:
-     trivy image --exit-code 1 --severity HIGH,CRITICAL --format table -o trivy-report.txt <your-username>/petclinic:latest
+     trivy image --exit-code 1 --severity HIGH,CRITICAL --format table -o trivy-report.txt pavan1309/petclinic:latest
 
-Tools Used
-----------
-- Jenkins
-- Maven
-- SonarQube
-- OWASP Dependency Check
-- Docker
-- Trivy
+10. Post Actions
+    - Archive build artifacts (WAR file)
+    - Archive Trivy scan report
+    - Mark pipeline status (success/failure)
 
-Artifacts
----------
-- target/petclinic.war – built application
-- trivy-report.txt – vulnerability scan report
+Accessing the Web Application
+-----------------------------
+- Docker Command: docker run --name petclinic -p 8082:8080 pavan1309/petclinic:latest
+- Local Access: http://localhost:8082/petclinic/
+- Public Access: http://<your-public-ip>:8082/petclinic/
 
-Security
---------
-- Docker and SonarQube credentials are securely injected through Jenkins credentials.
+Tools
+--------------------
+- Jenkins – Automation server for orchestrating the pipeline
+- Maven – Build tool for compiling and packaging
+- SonarQube – Static code quality and security analysis
+- OWASP Dependency Check – Detects vulnerabilities in third-party libraries
+- Docker – Containerizes the application
+- Trivy – Scans Docker images for security issues
+
+Generated Artifacts
+-------------------
+- target/petclinic.war – Packaged Spring Boot application
+- trivy-report.txt – Docker vulnerability scan results
+
+Security & Credentials
+----------------------
+- Jenkins securely injects Docker Hub and SonarQube credentials using Jenkins Credentials Manager.
+- No sensitive information is hardcoded in the Jenkinsfile or source code.
+
+GitHub Webhook Integration
+--------------------------
+- A GitHub webhook is configured to trigger the Jenkins pipeline automatically on every push.
+- Webhook URL:
+  http://13.126.71.252:8080/github-webhook/
+- Ensure "GitHub hook trigger for GITScm polling" is enabled in the Jenkins job.
 
 Jenkinsfile
 -----------
-- The pipeline is implemented using a declarative Jenkinsfile.
-
-
+- The CI/CD workflow is implemented using a declarative Jenkinsfile stored in the root of the repository.
