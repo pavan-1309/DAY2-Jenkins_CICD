@@ -47,9 +47,10 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-creds') {
-                        def app = docker.build("pavan1309/petclinic:latest")
-                        app.push()
+                    docker.withRegistry('creds:dockerhub', toolName: 'docker') {
+                        sh "docker build -t image1 ."
+                        sh "docker tag image1 pavan1309/image1:latest"
+                        sh "docker push pavan1309/image1:latest"
                     }
                 }
             }
