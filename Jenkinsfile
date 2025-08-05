@@ -74,6 +74,13 @@ pipeline {
                 }
             }
         }
+        stage('Deploy the Application') {
+            steps {
+                script {
+                    sh 'docker run -d -p 8082:8080 pavan1309/petclinic:latest'
+                }
+            }
+        }
 
     }
 }
