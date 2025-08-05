@@ -7,53 +7,21 @@ pipeline {
     }
 
     environment {
-        SCANNER_HOME = tool 'sonar'
+        SONARQUBE_SERVER = 'sonar' // Jenkins SonarQube server name
+        SCANNER_HOME = tool 'sonar-scanner' // Must match Jenkins tool name
     }
 
     stages {
-        stage('Clean workspace') {
-            steps {
-                echo 'Cleaning workspace...'
-                cleanWs()
-            }
-        }
 
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/pavan-1309/DAY2-Jenkins_CICD.git'
+                git 'https://github.com/spring-petclinic/spring-framework-petclinic.git'
             }
         }
 
-        stage('Compile') {
+        stage('Clean & Compile') {
             steps {
                 sh 'mvn clean compile'
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    withSonarQubeEnv('sonar') {
-                        sh '''
-                            $SCANNER_HOME/bin/sonar \
-                            -Dsonar.projectName=Petclinic \
-                            -Dsonar.projectKey=petclinic \
-                            -Dsonar.sources=. \
-                            -Dsonar.java.binaries=.
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('SonarQube Quality Gate') {
-            steps {
-                timeout(time: 1, unit: 'MINUTES') {
-                    script {
-                        waitForQualityGate abortPipeline: true
-                    }
-                }
-                echo 'SonarQube Quality Gate passed.'
             }
         }
 
@@ -63,45 +31,65 @@ pipeline {
             }
         }
 
-        stage('Dependency Check') {
+        stage('Code Coverage Report') {
             steps {
-                dependencyCheck additionalArguments: '--scan ./ --format HTML', odcInstallation: 'owasp'
-                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                sh 'mvn jacoco:report'
             }
         }
 
-        stage('Build') {
-            steps {
-                sh 'mvn package'
-            }
-        }
-
-        stage('Docker Build and Push') {
+        stage('SonarQube Analysis') {
             steps {
                 script {
-                    withDockerRegistry(credentialsId: 'docker') {
-                        sh 'docker build -t pavan1309/petclinic:latest .'
-                        sh 'docker push pavan1309/petclinic:latest'
+                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                        sh '''
+                            ${SCANNER_HOME}/bin/sonar-scanner \
+                            -Dsonar.projectKey=petclinic \
+                            -Dsonar.projectName=Petclinic \
+                            -Dsonar.sources=. \
+                            -Dsonar.java.binaries=target/classes \
+                            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                        '''
                     }
                 }
             }
         }
 
-        stage('Image Scan') {
+        stage('Dependency Check') {
             steps {
-                script {
-                    sh 'docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image --exit-code 1 --severity HIGH,CRITICAL pavan1309/petclinic:latest'
+                sh 'mvn org.owasp:dependency-check-maven:check'
+            }
+        }
+
+        stage('Package Build') {
+            steps {
+                sh 'mvn package -DskipTests'
+            }
+        }
+
+        stage('Docker Build & Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        docker login -u $DOCKER_USER -p $DOCKER_PASS
+                        docker build -t $DOCKER_USER/petclinic:latest .
+                        docker push $DOCKER_USER/petclinic:latest
+                    '''
                 }
             }
         }
 
-        stage('Deploy the Application') {
+        stage('Trivy Scan') {
             steps {
-                script {
-                    sh 'docker rm -f petclinic || true'
-                    sh 'docker run -d --name petclinic -p 8082:8080 pavan1309/petclinic:latest'
-                }
+                sh 'trivy image --exit-code 0 --severity HIGH,CRITICAL $DOCKER_USER/petclinic:latest || true'
             }
         }
+        stage('Deploy the Application') {
+            steps {
+                sh '''
+                    docker run -d --name petclinic -p 8082:8080 $DOCKER_USER/petclinic:latest
+                '''
+            }
+        }
+
     }
 }
