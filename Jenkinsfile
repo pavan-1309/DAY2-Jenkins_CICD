@@ -19,7 +19,7 @@ pipeline {
             }
         }
 
-        stage('compile') {
+        stage('Compile') {
             steps {
                 sh 'mvn clean compile'
             }
@@ -33,12 +33,12 @@ pipeline {
 
         stage('Dependency Check') {
             steps {
-                dependencyCheck additionalArguments: '--scan ./ --format HTML ', odcInstallation: 'owasp'
+                dependencyCheck additionalArguments: '--scan ./ --format HTML', odcInstallation: 'owasp'
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
 
-        stage('build') {
+        stage('Build') {
             steps {
                 sh 'mvn package'
             }
@@ -47,10 +47,19 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 script {
-                    docker.withRegistry('creds:dockerhub', toolName: 'docker') {
-                        sh "docker build -t image1 ."
-                        sh "docker tag image1 pavan1309/image1:latest"
-                        sh "docker push pavan1309/image1:latest"
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'dockerhub-creds',
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_PASS'
+                        )
+                    ]) {
+                        sh '''
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            docker build -t pavan1309/petclinic:latest .
+                            docker push pavan1309/petclinic:latest
+                            docker logout
+                        '''
                     }
                 }
             }
