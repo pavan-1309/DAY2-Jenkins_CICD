@@ -50,6 +50,7 @@ pipeline {
                         sh 'docker tag petclinic:latest pavan1309/petclinic:latest'
                         sh 'docker push pavan1309/petclinic:latest'
                     }
+                }
             }
         }
     }
