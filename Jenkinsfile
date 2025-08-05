@@ -42,11 +42,11 @@ pipeline {
                 script {
                     withSonarQubeEnv("${SONARQUBE_SERVER}") {
                         sh '''
-                            ${SCANNER_HOME}/bin/sonar \
+                            ${SCANNER_HOME}/bin/sonar-scanner \
                             -Dsonar.projectKey=petclinic \
                             -Dsonar.projectName=Petclinic \
                             -Dsonar.sources=. \
-                            -Dsonar.java.binaries=target/classes \
+                            -Dsonar.java.binaries=. \
                             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                         '''
                     }
