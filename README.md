@@ -3,6 +3,8 @@ Spring Petclinic – CI/CD Pipeline
 
 This project sets up a complete CI/CD pipeline for the Spring Framework Petclinic application using Jenkins, SonarQube, Docker, Trivy, and OWASP Dependency Check.
 
+"I have added images to the images/ folder. Please open the folder to view them."
+
 Source Code
 -----------
 GitHub Repository:

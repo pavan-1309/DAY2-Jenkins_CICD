@@ -90,7 +90,7 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 sh '''
-                    trivy image --exit-code 0 --severity HIGH,CRITICAL --format table -o trivy-report.txt $DOCKER_USER/petclinic:latest || true
+                    trivy image --exit-code 0 --severity HIGH,CRITICAL --format table -o trivy-report.txt pavan1309/petclinic:latest || true
                 '''
             }
         }
