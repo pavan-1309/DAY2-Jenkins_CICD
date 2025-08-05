@@ -64,7 +64,8 @@ pipeline {
 
         stage('Dependency Check') {
             steps {
-                sh 'mvn org.owasp:dependency-check-maven:check'
+                dependencyCheck additionalArguments: '--scan ./ --format HTML ', odcInstallation: 'owasp'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
 
@@ -96,9 +97,10 @@ pipeline {
 
         stage('Deploy the Application') {
             steps {
+                
                 sh '''
                     docker rm -f petclinic || true
-                    docker run -d --name petclinic -p 8082:8080 $DOCKER_USER/petclinic:latest
+                    docker run -d --name petclinic -p 8082:8080 pavan1309/petclinic:latest
                 '''
             }
         }
