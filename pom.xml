@@ -10,27 +10,27 @@
   <packaging>jar</packaging>
 
   <name>Spring Framework PetClinic</name>
-  <description>PetClinic Spring Boot Sample Application</description>
+  <description>Spring Boot PetClinic Application</description>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>2.7.18</version>
-    <relativePath/> <!-- lookup parent from repository -->
+    <relativePath/>
   </parent>
 
   <properties>
     <java.version>11</java.version>
+    <jacoco.version>0.8.11</jacoco.version>
   </properties>
 
   <dependencies>
-    <!-- Web -->
+    <!-- Spring Boot Starters -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
 
-    <!-- JPA -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -50,7 +50,7 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- Test -->
+    <!-- Testing -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -60,14 +60,14 @@
 
   <build>
     <plugins>
+
       <!-- Spring Boot Plugin -->
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
-        <version>2.7.18</version>
       </plugin>
 
-      <!-- Compiler Plugin -->
+      <!-- Java Compiler -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
@@ -76,7 +76,52 @@
           <target>${java.version}</target>
         </configuration>
       </plugin>
+
+      <!-- JaCoCo for Code Coverage -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Surefire for Unit Tests -->
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.5</version>
+        <configuration>
+          <argLine>${surefireArgLine} -Duser.language=en</argLine>
+          <includes>
+            <include>**/*Tests.java</include>
+            <include>**/*Test.java</include>
+          </includes>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 
+  <reporting>
+    <plugins>
+      <!-- JaCoCo reporting -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+      </plugin>
+    </plugins>
+  </reporting>
 </project>
